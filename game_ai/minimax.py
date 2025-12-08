@@ -7,9 +7,9 @@ import random
 ###
 
 # Constants for Minimax
-QUIESCENCE_MAX_DEPTH = 4 
+QUIESCENCE_MAX_DEPTH = 0
 # Constants for Minimax
-MAX_SEARCH_DEPTH = 6
+MAX_SEARCH_DEPTH = 2
 # Piece values for the evaluation function (in centipawns/pawn units)
 PIECE_VALUES = {
     PieceType.PAWN: 10,

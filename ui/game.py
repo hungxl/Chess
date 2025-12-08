@@ -1,8 +1,9 @@
 """Main chess game UI class."""
-
+import time
 import pygame
 import os
 from typing import Optional
+from game_ai.minimax import find_random_move, find_best_move
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -423,6 +424,12 @@ class ChessGame:
                     )
             
             self._play_move_sound(captured is not None or is_en_passant)
+            if self.board.current_turn == Color.WHITE:
+                self._random_bot_move()
+            if self.board.current_turn == Color.BLACK:
+                self._minimax_bot_move()
+            time.sleep(0.5)
+
     
     def _play_move_sound(self, is_capture: bool = False):
         """Play appropriate sound for a move."""
@@ -681,3 +688,28 @@ class ChessGame:
             self.clock.tick(FPS)
         
         pygame.quit()
+
+    
+    def _random_bot_move(self):
+        # If game already over, do nothing
+        if self.board.game_over:
+            return
+        bot_move = find_random_move(self.board)
+        if bot_move is None:
+            return
+        start, end = bot_move 
+        promo = PieceType.QUEEN  # Bot default promotion to Queen if needed
+        self._make_move(start, end, promo)
+
+    def _minimax_bot_move(self):
+        if self.board.game_over:
+            return
+        bot_move = find_best_move(self.board)
+        if bot_move is None:
+            return
+        start, end = bot_move 
+        promo = PieceType.QUEEN  # Bot default promotion to Queen if needed
+        self._make_move(start, end, promo)
+
+
+
