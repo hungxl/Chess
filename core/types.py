@@ -3,6 +3,7 @@
 from enum import Enum
 from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
+from time import time
 
 if TYPE_CHECKING:
     from .pieces import Piece
@@ -60,6 +61,8 @@ class Move:
     piece_had_moved: bool = False
     rook_had_moved: bool = False
     previous_en_passant: Optional[Position] = None
+    # For recording time taken per move
+    timestamp: float = time()
     
     def to_algebraic(self) -> str:
         """Convert move to algebraic notation."""
@@ -97,3 +100,33 @@ class Move:
             promotion = "=" + promo_symbols.get(self.promotion_type, "Q")
         
         return f"{piece_symbol}{start_file}{capture}{dest}{promotion}"
+    
+    def to_uci(self) -> str:
+        """Convert move to UCI notation (e.g., e2e4, e7e8q), including castling."""
+        # Handle castling
+        if self.is_castling:
+            # White: O-O (kingside) = e1g1, O-O-O (queenside) = e1c1
+            # Black: O-O (kingside) = e8g8, O-O-O (queenside) = e8c8
+            if self.start.row == 7:  # White
+                if self.end.col == 6:
+                    return "e1g1"
+                else:
+                    return "e1c1"
+            elif self.start.row == 0:  # Black
+                if self.end.col == 6:
+                    return "e8g8"
+                else:
+                    return "e8c8"
+        # Normal move
+        start_sq = chr(ord('a') + self.start.col) + str(8 - self.start.row)
+        end_sq = chr(ord('a') + self.end.col) + str(8 - self.end.row)
+        promo = ''
+        if self.promotion_type:
+            promo_map = {
+                PieceType.QUEEN: 'q',
+                PieceType.ROOK: 'r',
+                PieceType.BISHOP: 'b',
+                PieceType.KNIGHT: 'n',
+            }
+            promo = promo_map.get(self.promotion_type, 'q')
+        return f"{start_sq}{end_sq}{promo}"
