@@ -28,7 +28,8 @@ class Board:
             self.setup_record()
     
     def switch_to_bot_mode(self, is_bot_board: bool = True):
-        """Set whether this board is in the minimax/ ai mode."""
+        """Set whether this board is in the minimax/ ai mode.
+        Recording PGN is only done for the main board."""
         self.is_main_board = not is_bot_board
 
 

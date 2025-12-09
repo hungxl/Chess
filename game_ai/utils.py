@@ -71,7 +71,7 @@ def quiescence_search(board: Board, alpha: float, beta: float, current_depth: in
         moves = _get_all_legal_moves(board, Color.WHITE)
         # Only consider CAPTURES and CHECKS for the quiescence search 
         for start, end in moves:
-            piece = board.get_piece(start)
+            # piece = board.get_piece(start)
             target = board.get_piece(end)
             # Check for captures or en passant target
             if target or end == board.en_passant_target: 
@@ -90,7 +90,7 @@ def quiescence_search(board: Board, alpha: float, beta: float, current_depth: in
             return alpha   
         moves = _get_all_legal_moves(board, Color.BLACK)
         for start, end in moves:
-            piece = board.get_piece(start)
+            # piece = board.get_piece(start)
             target = board.get_piece(end)
             # Check for captures or en passant target
             if target or end == board.en_passant_target: 

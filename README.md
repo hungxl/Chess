@@ -5,7 +5,15 @@ A complete chess game built with Python and Pygame, featuring all standard chess
 ![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
 ![Pygame](https://img.shields.io/badge/Pygame-2.6+-green.svg)
 
+
 ## Features
+
+## Advanced Features
+
+- **PGN Export:** Automatically saves each game in PGN format, including move times and standard algebraic notation (SAN).
+- **Move Time Tracking:** Each move’s time is recorded and included in the PGN. (If all times are 0.00s, check that time tracking is enabled and timestamps are updated between moves.)
+- **AI Opponent:** Play against a bot, or watch bot-vs-bot matches.
+- **Undo/Redo:** Navigate move history freely, including after bot moves.
 
 ### Complete Chess Rules
 - All piece movements (Pawn, Rook, Knight, Bishop, Queen, King)
@@ -73,18 +81,36 @@ Chess/
 ├── pyproject.toml       # Project configuration
 ├── core/                # Game logic
 │   ├── __init__.py
+│   ├── board.py         # Board state and game logic
 │   ├── constants.py     # Constants and colors
-│   ├── types.py         # Type definitions (Position, Move, etc.)
 │   ├── pieces.py        # Piece classes with movement rules
-│   └── board.py         # Board state and game logic
+│   └── types.py         # Type definitions (Position, Move, etc.)
 ├── ui/                  # User interface
 │   ├── __init__.py
 │   └── game.py          # Pygame rendering and input handling
-└── assets/              # Game assets
-    ├── img/
-    │   ├── boards/      # Board images
-    │   └── 16x32 pieces/# Piece sprites
-    └── sound/           # Sound effects
+├── game_ai/             # AI logic
+│   ├── __init__.py
+│   ├── bot.py           # Bot move selection
+│   └── utils.py         # AI utilities
+├── logger/              # Logging utilities
+│   ├── __init__.py
+│   ├── logger.py        # Logger implementation
+│   ├── chess_game.log   # Game log
+│   ├── chess_debug.log  # Debug log
+│   └── chess_errors.log # Error log
+├── records/             # Saved PGN game records
+│   └── chess_record_*.pgn
+├── assets/              # Game assets
+│   ├── img/
+│   │   ├── boards/          # Board images
+│   │   ├── 16x16 pieces/    # Piece sprites (16x16)
+│   │   ├── 16x32 pieces/    # Piece sprites (16x32)
+│   │   ├── cursor.png       # Cursor image
+│   │   └── README.txt
+│   └── sound/
+│       ├── move-self.mp3    # Move sound
+│       ├── capture.mp3      # Capture sound
+│       └── notify.mp3       # Notification sound
 ```
 
 ## Credits
