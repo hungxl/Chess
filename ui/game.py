@@ -3,7 +3,7 @@ import time
 import pygame
 import os
 from typing import Optional
-from game_ai.minimax import find_random_move, find_best_move
+from game_ai import random_bot_move, minimax_bot_move
 
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -405,6 +405,26 @@ class ChessGame:
                     self.promoting_pawn_move = None
                     return
     
+    def handle_bot_move(self, bot_type: str):
+        """Handle bot move based on selected bot type."""
+        if self.board.game_over:
+            return
+        
+        if self.board.current_turn == Color.WHITE:
+            bot_move = random_bot_move(self.board)
+        elif self.board.current_turn == Color.BLACK:
+            bot_move = minimax_bot_move(self.board)
+        else:
+            return  # Unknown bot type
+        
+        time.sleep(0.5)  # Small delay for realism
+        if bot_move is None:
+            return
+        
+        start, end, promo = bot_move
+        self._make_move(start, end, promo)
+
+
     def _make_move(self, start: Position, end: Position, 
                    promotion_type: Optional[PieceType] = None):
         """Execute a move and play sounds."""
@@ -412,6 +432,7 @@ class ChessGame:
         captured = self.board.get_piece(end)
         is_en_passant = isinstance(piece, Pawn) and end == self.board.en_passant_target
         
+
         move = self.board.move_piece(start, end, promotion_type)
         
         if move:
@@ -424,11 +445,6 @@ class ChessGame:
                     )
             
             self._play_move_sound(captured is not None or is_en_passant)
-            if self.board.current_turn == Color.WHITE:
-                self._random_bot_move()
-            if self.board.current_turn == Color.BLACK:
-                self._minimax_bot_move()
-            time.sleep(0.5)
 
     
     def _play_move_sound(self, is_capture: bool = False):
@@ -455,6 +471,8 @@ class ChessGame:
             self._assign_piece_images()
             self.selected_piece = None
             self.valid_moves = []
+            # Recalculate game end state
+            self.board._check_game_end()
             if self.sound_move:
                 self.sound_move.play()
     
@@ -465,6 +483,7 @@ class ChessGame:
             self._assign_piece_images()
             self.selected_piece = None
             self.valid_moves = []
+            self.board._check_game_end()
             if self.sound_move:
                 self.sound_move.play()
     
@@ -475,6 +494,7 @@ class ChessGame:
         self._assign_piece_images()
         self.selected_piece = None
         self.valid_moves = []
+        self.board._check_game_end()
         if self.sound_move:
             self.sound_move.play()
     
@@ -485,6 +505,7 @@ class ChessGame:
         self._assign_piece_images()
         self.selected_piece = None
         self.valid_moves = []
+        self.board._check_game_end()
         if self.sound_move:
             self.sound_move.play()
     
@@ -546,6 +567,7 @@ class ChessGame:
         # Draw game over message
         if self.board.game_over:
             self._draw_game_over()
+            self.board.save_record()
         
         pygame.display.flip()
     
@@ -642,74 +664,70 @@ class ChessGame:
         hint_rect = hint_text.get_rect(center=(BOARD_SIZE // 2, WINDOW_HEIGHT // 2 + 35))
         self.screen.blit(hint_text, hint_rect)
     
+   
+
     def run(self):
-        """Main game loop."""
+        """Main game loop for bot vs bot, stops bot after undo/redo."""
         running = True
-        
+        bot_delay = 0.3  # seconds between moves
+        last_bot_move_time = time.time()
+        self.bot_playing = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:  # Left click
-                        self.handle_click(event.pos)
-                    elif event.button == 4:  # Scroll up
+                    if event.button == 4:  # Scroll up
                         self.move_history_panel.handle_scroll(1, len(self.board.move_history))
                     elif event.button == 5:  # Scroll down
                         self.move_history_panel.handle_scroll(-1, len(self.board.move_history))
+                    elif event.button == 1:  # Left click
+                        self.handle_click(event.pos)
+                        self.bot_playing = False
                 elif event.type == pygame.MOUSEMOTION:
                     for button in self.buttons:
                         button.handle_mouse_motion(event.pos)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:  # Reset game
                         self._reset_game()
+                        self.bot_playing = True
                     elif event.key == pygame.K_z:
                         if event.mod & pygame.KMOD_CTRL:
                             if event.mod & pygame.KMOD_SHIFT:
                                 self._undo_all()
                             else:
                                 self._undo()
+                        self.bot_playing = False
                     elif event.key == pygame.K_y:
                         if event.mod & pygame.KMOD_CTRL:
                             if event.mod & pygame.KMOD_SHIFT:
                                 self._redo_all()
                             else:
                                 self._redo()
+                        self.bot_playing = False
                     elif event.key == pygame.K_LEFT:
                         self._undo()
+                        self.bot_playing = False
                     elif event.key == pygame.K_RIGHT:
                         self._redo()
+                        self.bot_playing = False
                     elif event.key == pygame.K_HOME:
                         self._undo_all()
+                        self.bot_playing = False
                     elif event.key == pygame.K_END:
                         self._redo_all()
-            
+                        self.bot_playing = False
+            # Only let bots play if game not over, not promoting pawn, and bot_playing is True
+            if self.bot_playing and not self.board.game_over and not self.promoting_pawn_move:
+                now = time.time()
+                if now - last_bot_move_time > bot_delay:
+                    self.handle_bot_move('random')
+                    last_bot_move_time = now
             self.draw()
             self.clock.tick(FPS)
-        
         pygame.quit()
 
     
-    def _random_bot_move(self):
-        # If game already over, do nothing
-        if self.board.game_over:
-            return
-        bot_move = find_random_move(self.board)
-        if bot_move is None:
-            return
-        start, end = bot_move 
-        promo = PieceType.QUEEN  # Bot default promotion to Queen if needed
-        self._make_move(start, end, promo)
-
-    def _minimax_bot_move(self):
-        if self.board.game_over:
-            return
-        bot_move = find_best_move(self.board)
-        if bot_move is None:
-            return
-        start, end = bot_move 
-        promo = PieceType.QUEEN  # Bot default promotion to Queen if needed
-        self._make_move(start, end, promo)
 
 
 
