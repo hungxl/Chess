@@ -7,7 +7,7 @@ import random
 ###
 
 # Constants for Minimax
-QUIESCENCE_MAX_DEPTH = 0
+QUIESCENCE_MAX_DEPTH = 2
 # Constants for Minimax
 MAX_SEARCH_DEPTH = 2
 # Piece values for the evaluation function (in centipawns/pawn units)
@@ -68,7 +68,7 @@ def quiescence_search(board: Board, alpha: float, beta: float, current_depth: in
         if alpha >= beta:
             return beta
         # Generate ALL legal moves
-        moves = _get_all_legal_moves(board, Color.WHITE)
+        moves = order_moves(board, _get_all_legal_moves(board, Color.WHITE))
         # Only consider CAPTURES and CHECKS for the quiescence search 
         for start, end in moves:
             piece = board.get_piece(start)
@@ -88,7 +88,7 @@ def quiescence_search(board: Board, alpha: float, beta: float, current_depth: in
         beta = min(beta, stand_pat)
         if alpha >= beta:
             return alpha   
-        moves = _get_all_legal_moves(board, Color.BLACK)
+        moves = order_moves(board, _get_all_legal_moves(board, Color.BLACK))
         for start, end in moves:
             piece = board.get_piece(start)
             target = board.get_piece(end)
@@ -117,7 +117,7 @@ def minimax_alpha_beta(board: Board, depth: int, alpha: float, beta: float,
             return evaluate_board(board)
         return quiescence_search(board, alpha, beta, 0)
     
-    moves = _get_all_legal_moves(board, current_color)
+    moves = order_moves(board, _get_all_legal_moves(board, current_color))
     if not moves:
         board._check_game_end() # check update game_over status
         return evaluate_board(board) 
@@ -215,3 +215,16 @@ def find_random_move(board: 'Board') -> Optional[tuple[Position, Position]]:
     
     random_move = random.choice(all_legal_moves)
     return random_move
+
+##################################################################################################################
+
+def order_moves(board: Board, moves: list[tuple[Position, Position]]) -> list[tuple[Position, Position]]:
+    """Helper function for orders moves to improve alpha-beta pruning efficiency."""
+    def move_score(move):
+        start, end = move
+        target = board.get_piece(end)
+        if target:  # Captures
+            return PIECE_VALUES.get(target.piece_type, 0)
+        return 0  # Non-captures have lower priority
+
+    return sorted(moves, key=move_score, reverse=True)
