@@ -1,7 +1,7 @@
 
 from core.types import PieceType
 from core.board import Board
-from .minimax import find_random_move, find_best_move
+from .utils import find_random_move, find_best_move
 
 def random_bot_move(board: Board):
     bot_move = find_random_move(board)
